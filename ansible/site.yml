@@ -1,0 +1,7 @@
+---
+- name: prepare servers
+  hosts: master, node
+  roles:
+    - common
+
+
