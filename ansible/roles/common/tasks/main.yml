@@ -12,3 +12,28 @@
   apt: name={{ item }} state=present cache_valid_time=3600
   with_items:
     - docker-engine=1.9.1-0~trusty
+
+- name: bootstrap docker upstart configuration
+  template: src=etc/init/docker-bootstrap.conf.j2 dest=/etc/init/docker-bootstrap.conf
+  notify:
+    - restart bootstrap docker
+
+- name: bootstrap docker defaults
+  template: src=etc/default/docker-bootstrap.j2 dest=/etc/default/docker-bootstrap
+  notify:
+    - restart bootstrap docker
+
+- name: start docker-bootstrap service
+  service: name=docker-bootstrap state=started
+
+- name: etcd
+  docker:
+    docker_url: unix:///var/run/docker-bootstrap.sock
+    restart: on-failure
+    net: host
+    image: gcr.io/google_containers/etcd-amd64:2.2.1
+    command: /usr/local/bin/etcd
+    # put env here
+
+
+

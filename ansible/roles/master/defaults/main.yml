@@ -1,0 +1,7 @@
+---
+k8s_version: "1.1.7"
+etcd_version: "2.2.1"
+flannel_version: "0.5.5"
+flannel_ipmasq: true
+flannel_iface: eth1
+

@@ -1,0 +1,3 @@
+---
+- name: restart boostrap docker
+  service: name=bootstrap-docker state=restarted
