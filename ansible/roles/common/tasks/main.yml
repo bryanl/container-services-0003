@@ -1,4 +1,10 @@
 ---
+- name: add do-repo key
+  apt_key: url=http://do-repo.x.pifft.com/do-repo.key state=present
+
+- name: add do-repo
+  apt_repository: repo="deb [arch=amd64] http://do-repo.x.pifft.com trusty main" update_cache=yes state=present
+
 - name: add docker key
   apt_key: keyserver=p80.pool.sks-keyservers.net id=58118E89F3A912897C070ADBF76221572C52609D
 
@@ -14,6 +20,7 @@
     - docker-engine=1.9.1-0~trusty
     - python-dev
     - python-setuptools
+    - etcd
 
 - name: install pip
   easy_install: name=pip
@@ -34,12 +41,11 @@
 - name: start docker-bootstrap service
   service: name=docker-bootstrap state=started
 
-- debug: msg={{ etcd_env }}
-  when: inventory_hostname in groups['master']
-
 - name: etcd
   when: inventory_hostname in groups['master']
   docker:
+    name: etcd
+    state: reloaded
     docker_url: unix:///var/run/docker-bootstrap.sock
     restart_policy: on-failure
     net: host
@@ -47,5 +53,14 @@
     command: /usr/local/bin/etcd
     env: "{{ etcd_env }}"
 
+- name: check for flannel configuration
+  when: inventory_hostname in groups['master.0']
+  register: key_check
+  changed_when: false
+  ignore_errors: true
+  command: etcdctl get /coreos.com/network/config
 
-
+- name: set flannel configuration
+  when: (inventory_hostname in groups['master.0']) and (key_check | failed)
+  command: >
+    etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16", "Backend": { "Type": "vxlan" } }'
