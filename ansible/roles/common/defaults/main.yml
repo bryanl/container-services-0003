@@ -1,0 +1,23 @@
+---
+etcd_peers_group: master
+etcd_peer_interface: eth1
+etcd_client_url_scheme: http
+etcd_peer_url_scheme: http
+etcd_client_port: 2379
+etcd_peer_port: 2380
+etcd_initial_cluster: "{{ lookup('template', 'initial_cluster.j2') }}"
+
+etcd_client_listen_url: "{{ etcd_client_url_scheme}}://{{ hostvars[inventory_hostname]['ansible_' + etcd_peer_interface]['ipv4']['address'] }}:{{ etcd_client_port }}"
+etcd_peer_listen_url: "{{ etcd_peer_url_scheme}}://{{ hostvars[inventory_hostname]['ansible_' + etcd_peer_interface]['ipv4']['address'] }}:{{ etcd_peer_port }}"
+
+etcd_env:
+  ETCD_NAME: "{{ hostvars[inventory_hostname]['name'] }}"
+  ETCD_LISTEN_CLIENT_URLS: http://127.0.0.1:{{ etcd_client_port }},{{ etcd_client_listen_url }}
+  ETCD_ADVERTISE_CLIENT_URLS: http://127.0.0.1:{{ etcd_client_port }},{{ etcd_client_listen_url }}
+  ETCD_LISTEN_PEER_URLS: "{{ etcd_peer_listen_url }}"
+  ETCD_ADVERTISE_PEER_URLS: "{{ etcd_peer_listen_url }}"
+  ETCD_INITIAL_ADVERTISE_PEER_URLS: "{{ etcd_peer_listen_url }}" 
+  ETCD_INITIAL_CLUSTER: "{{ etcd_initial_cluster }}"
+  ETCD_INITIAL_CLUSTER_STATE: new
+  ETCD_INITIAL_CLUSTER_TOKEN: k8s-etcd-cluster
+  ETCD_DATA_DIR: /var/etcd/data

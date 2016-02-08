@@ -12,6 +12,14 @@
   apt: name={{ item }} state=present cache_valid_time=3600
   with_items:
     - docker-engine=1.9.1-0~trusty
+    - python-dev
+    - python-setuptools
+
+- name: install pip
+  easy_install: name=pip
+
+- name: install docker-py
+  pip: name=docker-py version=1.7.0
 
 - name: bootstrap docker upstart configuration
   template: src=etc/init/docker-bootstrap.conf.j2 dest=/etc/init/docker-bootstrap.conf
@@ -26,14 +34,18 @@
 - name: start docker-bootstrap service
   service: name=docker-bootstrap state=started
 
+- debug: msg={{ etcd_env }}
+  when: inventory_hostname in groups['master']
+
 - name: etcd
+  when: inventory_hostname in groups['master']
   docker:
     docker_url: unix:///var/run/docker-bootstrap.sock
-    restart: on-failure
+    restart_policy: on-failure
     net: host
     image: gcr.io/google_containers/etcd-amd64:2.2.1
     command: /usr/local/bin/etcd
-    # put env here
+    env: "{{ etcd_env }}"
 
 
 
