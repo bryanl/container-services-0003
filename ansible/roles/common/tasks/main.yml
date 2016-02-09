@@ -21,6 +21,7 @@
     - python-dev
     - python-setuptools
     - etcd
+    - bridge-utils
 
 - name: install pip
   easy_install: name=pip
@@ -41,7 +42,7 @@
 - name: start docker-bootstrap service
   service: name=docker-bootstrap state=started
 
-- name: etcd
+- name: etcd docker container
   when: inventory_hostname in groups['master']
   docker:
     name: etcd
@@ -64,3 +65,26 @@
   when: (inventory_hostname in groups['master.0']) and (key_check | failed)
   command: >
     etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16", "Backend": { "Type": "vxlan" } }'
+
+- name: flannel docker container
+  docker:
+    name: flannel
+    state: reloaded
+    docker_url: unix:///var/run/docker-bootstrap.sock
+    restart_policy: on-failure
+    net: host
+    privileged: true
+    image: quay.io/coreos/flannel:0.5.5
+    command: /opt/bin/flanneld
+    env: "{{ flannel_env }}"
+    volumes:
+      - /dev/net:/dev/net
+  notify:
+    - reset docker interface
+
+- name: force restart docker interface
+  command: /bin/true
+  when: restart_docker is defined
+  notify:
+    - reset docker interface
+

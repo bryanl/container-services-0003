@@ -1,3 +1,21 @@
 ---
 - name: restart boostrap docker
   service: name=bootstrap-docker state=restarted
+
+- name: reset docker interface
+  command: /bin/true
+  notify:
+    - stop docker interface
+    - remove docker bridge
+    - restart docker
+
+- name: stop docker interface
+  command: ifconfig docker0 down
+
+- name: remove docker bridge
+  command: brctl delbr docker0
+
+- name: restart docker
+  service: name=docker state=restarted
+
+

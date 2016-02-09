@@ -21,3 +21,7 @@ etcd_env:
   ETCD_INITIAL_CLUSTER_STATE: new
   ETCD_INITIAL_CLUSTER_TOKEN: k8s-etcd-cluster
   ETCD_DATA_DIR: /var/etcd/data
+
+flannel_env:
+  FLANNEL_IPMASQ: "true"
+  FLANNEL_IFACE: eth1
